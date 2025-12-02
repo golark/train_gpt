@@ -18,7 +18,7 @@ class DataLoaderLite:
     DataLoader for loading from sharded .npy files.
     Efficiently handles large datasets split across multiple files.
     """
-    def __init__(self, B, T, split, proc_idx, num_procs, data_root="./dataset"):
+    def __init__(self, B, T, split, proc_idx, num_procs, data_root="./train_gpt/dataset"):
         self.B = B
         self.T = T
         assert split in {"train", "val"}
@@ -93,40 +93,5 @@ class DataLoaderLite:
         y = buf[1:].view(B, T)
 
         self.current_position += B * T * self.num_procs
-        return x, y
-
-
-class SimpleDataLoader:
-    """
-    Simple DataLoader for in-memory token sequences.
-    Useful for smaller datasets or experiments.
-    """
-    def __init__(self, tokens, batch_size=4, block_size=32):
-        """
-        Args:
-            tokens: List or array of tokens
-            batch_size: Batch size (B)
-            block_size: Sequence length (T)
-        """
-        self.tokens = tokens
-        self.B = batch_size
-        self.T = block_size
-        self.max_idx = len(tokens) - self.B * self.T - 1
-        self.current_idx = 0
-
-    def __iter__(self):
-        """Reset iterator to start."""
-        self.current_idx = 0
-        return self
-
-    def __next__(self):
-        """Get next batch."""
-        if self.current_idx + self.B * self.T + 1 > len(self.tokens):
-            raise StopIteration
-        buf = torch.tensor(self.tokens[self.current_idx:self.current_idx + self.B * self.T + 1])
-        x = buf[:-1].view(self.B, self.T)
-        y = buf[1:].view(self.B, self.T)
-        # Move to next position (step by block_size to get non-overlapping batches)
-        self.current_idx += self.T
         return x, y
 
