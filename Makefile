@@ -1,5 +1,5 @@
 
-baseline:
+inc_max_lr:
 	python3 -m train_gpt.train \
 		--vocab-size 50304 \
 		--block-size 1024 \
@@ -16,4 +16,4 @@ baseline:
 		--warmup-steps 300 \
 		--base-lr 6e-4 \
 		--weight-decay 0.1 \
-		--output-dir ./baseline
+		--output-dir ./inc_max_lr

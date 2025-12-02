@@ -90,7 +90,7 @@ def train_micro_steps(model, optimizer, num_micro_steps, train_loader, device, d
         with torch.autocast(device_type=device_type, dtype=torch.bfloat16):
             _, loss = model(x, y)
         loss = loss / num_micro_steps
-        loss_accum += loss.detach().float().item()
+        loss_accum += loss.detach()
         loss.backward()
 
     if ddp_sync:
@@ -99,7 +99,7 @@ def train_micro_steps(model, optimizer, num_micro_steps, train_loader, device, d
         dist.all_reduce(loss_tensor, op=dist.ReduceOp.AVG)
         return loss_tensor.item() / num_micro_steps
 
-    return loss_accum / num_micro_steps
+    return loss_accum.item() 
 
 def epoch(epoch_idx, model, train_loader, val_loader, device, optimizer, num_micro_steps, proc_idx, num_procs, max_steps, set_lr, output_dir):
 
