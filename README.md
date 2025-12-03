@@ -1,6 +1,6 @@
 # 🚀 Train GPT2 Performance Model for ~$5
 
-> **Note**: This repo is based on [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT), with adaptations to decrease cost to train and performance improvements
+> **Note**: This repo is based on [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT), with adaptations to decrease cost to train and improve model performance 
 
 This repo is to build and benchmark models intended to **outperform GPT2** (124M) — all while keeping total training costs **under $10** (estimated GPU rental, late 2025). 💸⚡️
 
