@@ -1,5 +1,7 @@
 # 🚀 Train GPT2 Performance Model for ~$5
 
+> **Note**: This repo is based on [Andrej Karpathy's nanoGPT](https://github.com/karpathy/nanoGPT), with adaptations to decrease cost to train and performance improvements
+
 This repo is to build and benchmark models intended to **outperform GPT2** (124M) — all while keeping total training costs **under $10** (estimated GPU rental, late 2025). 💸⚡️
 
 - 🧠 **Cutting-edge Techniques:** Integrating the latest SOTA research to slash training time *and* expenses!
@@ -7,7 +9,8 @@ This repo is to build and benchmark models intended to **outperform GPT2** (124M
     - 🔥 Smarter learning rate schedules
     - 🍦 SwigLU activations
     - 🔄 Rotary positional embeddings replacing absolute pos. embeddings
-- 💰 **Cost Estimate:** The ROPE model reaches GPT2-124M commonsense_qa accuracy after training on 3B samples. 🏋️‍♂️ On a single H100 GPU, this takes approximately 100 minutes ( Optimized batch sizing for H100 and compiled model). With H100 spot pricing averaging $3/hour (late 2025), the total training cost is just **$5**! 🚀
+- 💰 **Cost Estimate:** The ROPE model reaches GPT2-124M commonsense_qa accuracy after training on 3B samples. 🏋️‍♂️ On a single H100 GPU, this takes approximately 100 minutes (Optimized batch sizing for H100, compiled model). With H100 spot pricing averaging $3/hour (late 2025), the total training cost is just **$5**! 🚀
+
 ---
 
 ## 📈 Model Performance & Comparison
