@@ -1,5 +1,5 @@
 
-train_increase_max_lr:
+train_baseline:
 	python3 -m train_gpt.train \
 		--vocab-size 50304 \
 		--block-size 1024 \
