@@ -1,6 +1,6 @@
 # 🚀 GPT2 Performance Sub-$10
 
-Welcome to the **GPT2-Beaters** repo! Here we build and benchmark models intended to **outperform GPT2** (124M) — all while keeping total training costs **under $10** (estimated GPU rental, late 2025). 💸⚡️
+This repo is to build and benchmark models intended to **outperform GPT2** (124M) — all while keeping total training costs **under $10** (estimated GPU rental, late 2025). 💸⚡️
 
 - 🧠 **Cutting-edge Techniques:** Integrating the latest SOTA research to slash training time *and* expenses!
 - 🏗️ **Reference Point:** Standard GPT2 (124M params) as baseline, compared with improved models using:
@@ -21,11 +21,11 @@ Welcome to the **GPT2-Beaters** repo! Here we build and benchmark models intende
 
 ## 🛠️ Training Models Made Easy
 
-| 📚 Model Variant           | ▶️ Command                      |
-|:-------------------------- |:-------------------------------|
-| 🟦 GPT2 124M Baseline      | `make baseline`                 |
-| 🟥 Increased Max LR        | `make train_increase_max_lr`    |
-| 🟩 Rotational Pos Emb      | `make train_rotational_pos_emb` |
+| 📚 Model Variant           | ▶️ Command                                            |
+|:-------------------------- |:-----------------------------------------------------|
+| 🟦 GPT2 124M Baseline      | [`make baseline`](../blob/main/Makefile#L1)          |
+| 🟥 Increased Max LR        | [`make train_larger_lr`](../blob/main/Makefile#L21)  |
+| 🟩 Rotational Pos Emb      | [`make train_rotational_pos_emb`](../blob/main/Makefile#L26) |
 
 ---
 
