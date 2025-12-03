@@ -1,4 +1,9 @@
-Surpass GPT2 baseline model performance with a budget of $10 ( as of Late 2025 )
+- Repositry to Develop baseline models designed to surpass GPT2 performance, while keeping total training costs under $10 (estimated GPU rental prices for late 2025).
+```bash
+    make fastest
+```
+- Applies current state-of-the-art research and methods to reduce both training duration and expenses.
+- Uses a GPT2-style architecture with 124M parameters as the reference point, and compares it against models enhanced with optimized learning rates, SwigLU activations, and by replacing absolute positional embeddings with rotary positional embeddings.
 
 
 ### Comparison

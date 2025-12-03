@@ -38,3 +38,4 @@ train_rotational_pos_emb:
 		--weight-decay 0.1 \
 		--output-dir ./experiments/rope
 
+fastest: train_rotational_pos_emb
