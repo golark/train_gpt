@@ -3,7 +3,7 @@ train_gpt/dataset/
 __pycache__/
 *.py[codz]
 *$py.class
-
+*.pt
 # C extensions
 *.so
 
