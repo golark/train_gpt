@@ -24,11 +24,11 @@ This repo is to build and benchmark models intended to **outperform GPT2** (124M
 
 ## 🛠️ Training Models Made Easy
 
-| 📚 Model Variant           | ▶️ Command                                            |
-|:-------------------------- |:-----------------------------------------------------|
-| 🟦 GPT2 124M Baseline      | [`make baseline`](../blob/main/Makefile#L1)          |
-| 🟥 Increased Max LR        | [`make train_larger_lr`](../blob/main/Makefile#L21)  |
-| 🟩 Rotational Pos Emb      | [`make train_rotational_pos_emb`](../blob/main/Makefile#L26) |
+| 📚 Model Variant           | ▶️ Command                              |
+|:-------------------------- |:----------------------------------------|
+| 🟦 GPT2 124M Baseline      | [`make baseline`](Makefile#L1)   |
+| 🟥 Increased Max LR        | [`make train_increase_max_lr`](Makefile#L21)  |
+| 🟩 Rotational Pos Emb      | [`make train_rotational_pos_emb`](Makefile#L40) |
 
 ---
 
