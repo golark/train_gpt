@@ -11,7 +11,6 @@ import json
 import math
 import argparse
 
-from .model import GPT, GPTConfig, sample_from_model
 from .commonsense import evaluate_commonsense
 from .dataloader import DataLoaderLite
 
@@ -140,6 +139,9 @@ def epoch(epoch_idx, model, train_loader, val_loader, device, optimizer, num_mic
 def parse_args():
     parser = argparse.ArgumentParser(description='Train GPT model')
     
+    # Model selection
+    parser.add_argument('--model', type=str, default='model_ape', choices=['model_ape', 'model_rope'], help='Model module to use (model or model_rope)')
+    
     # Model configuration
     parser.add_argument('--vocab-size', type=int, default=50304, help='Vocabulary size')
     parser.add_argument('--block-size', type=int, default=1024, help='Max sequence length (block size)')
@@ -163,7 +165,6 @@ def parse_args():
     parser.add_argument('--weight-decay', type=float, default=0.1, help='Weight decay')
     
     parser.add_argument('--output-dir', type=str, default='./checkpoints', help='Directory to save outputs')
-    
     parser.add_argument('--device', type=str, default=None, help='Device to use (cpu/cuda/mps), auto-detected if not specified')
     
     return parser.parse_args()
@@ -212,6 +213,11 @@ def main():
 
     # Calculate micro steps for gradient accumulation
     num_micro_steps = int(args.total_batch_size // (B * T))
+
+    if args.model == "model_rope":
+        from .model_rope import GPT, GPTConfig
+    else:
+        from .model_ape import GPT, GPTConfig
 
     model_config = GPTConfig(
         vocab_size=args.vocab_size,
