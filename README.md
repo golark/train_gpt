@@ -1,20 +1,47 @@
-Surpass GPT2 baseline model performance with a budget of $10 ( as of Late 2025 )
+# 🚀 Train GPT2 Performance Model for ~$5
 
+This repo is to build and benchmark models intended to **outperform GPT2** (124M) — all while keeping total training costs **under $10** (estimated GPU rental, late 2025). 💸⚡️
 
-## Models
-| name.                       | make                       | cost     |
-| :-------                    | :-------                   | -------: |
-| GPT2 124M                   | make baseline              | right    |
-| + Increased Max LR          | make train_increase_max_lr | right    |
-| + Rotational Pos Embeddings | [ ]                        |          |
-| + SWigLU                    | [ ]                        |          |
+- 🧠 **Cutting-edge Techniques:** Integrating the latest SOTA research to slash training time *and* expenses!
+- 🏗️ **Reference Point:** Standard GPT2 (124M params) as baseline, compared with improved models using:
+    - 🔥 Smarter learning rate schedules
+    - 🍦 SwigLU activations
+    - 🔄 Rotary positional embeddings replacing absolute pos. embeddings
+- 💰 **Cost Estimate:** The ROPE model reaches GPT2-124M commonsense_qa accuracy after training on 3B samples. 🏋️‍♂️ On a single H100 GPU, this takes approximately 100 minutes ( Optimized batch sizing for H100 and compiled model). With H100 spot pricing averaging $3/hour (late 2025), the total training cost is just **$5**! 🚀
+---
 
-## next
-- [x] commonsense_qa
-- [x] exp 1 - baseline gpt 
-- [x] exp 2 - larger lr gpt2 until meet gpt2 perf
-- [x] exp 3 - ROPE until meet gpt2 perf
-- [x] gpt2 on commonsense_qa
-- [ ] scale up the model
-- [ ] exp 4 - Swiglu
-- [ ] v3 model performance on commonsense_qa 
+## 📈 Model Performance & Comparison
+
+| 🚦 Progress Over Baseline  |
+|:-------------------------:|
+| ![](media/convergence_comparison.png) |
+| ![](media/commonsense_qa.png)         |
+
+---
+
+## 🛠️ Training Models Made Easy
+
+| 📚 Model Variant           | ▶️ Command                                            |
+|:-------------------------- |:-----------------------------------------------------|
+| 🟦 GPT2 124M Baseline      | [`make baseline`](../blob/main/Makefile#L1)          |
+| 🟥 Increased Max LR        | [`make train_larger_lr`](../blob/main/Makefile#L21)  |
+| 🟩 Rotational Pos Emb      | [`make train_rotational_pos_emb`](../blob/main/Makefile#L26) |
+
+---
+
+## 🗺️ What’s Next?
+
+- [x] ✅ commonsense_qa
+- [x] ✅ exp 1 - baseline gpt
+- [x] ✅ exp 2 - larger lr gpt2 until meet gpt2 perf
+- [x] ✅ exp 3 - ROPE until meet gpt2 perf
+- [ ] ✳️ exp 4 - Swiglu
+- [x] ✅ gpt2 on commonsense_qa
+- [ ] ⏫ scale up the model
+- [ ] 📊 v3 model performance on commonsense_qa 
+- [ ] 🪶 quantized inference and benchmark
+- [ ] 🧑‍💻 vanilla C serve model
+
+---
+
+Let’s make *state-of-the-art* cheap, fun, and open! 🌟
