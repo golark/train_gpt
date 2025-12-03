@@ -5,12 +5,13 @@ Surpass GPT2 baseline model performance with a budget of $10 ( as of Late 2025 )
 
 
 ### how to make
-| name.                       | make                             | cost     |
-| :-------                    | :-------                         | -------: |
-| GPT2 124M                   | ```make baseline```              | |
-| + Increased Max LR          | ```make train_increase_max_lr``` | |
-| + Rotational Pos Embeddings | [ ]                              |          |
-| + SWigLU                    | [ ]                              |          |
+| name                        | command                           | cost     |
+| :-------------------------- | :-------------------------------- | :------- |
+| GPT2 124M                   | `make baseline`                   |          |
+| + Increased Max LR          | `make train_increase_max_lr`      |          |
+| + Rotational Pos Embeddings | `make train_rotational_pos_emb`   |          |
+| + SWigLU                    | [ ]                               |          |
+
 
 ### next
 - [x] commonsense_qa
