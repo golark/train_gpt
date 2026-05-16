@@ -1,3 +1,4 @@
+# python
 from dataclasses import dataclass
 import torch.nn as nn
 from torch.nn import functional as F
@@ -176,6 +177,51 @@ class GPT(nn.Module):
 
         return model
 
+    def to_hf(self, save_directory):
+        """
+        Export this minGPT model to a HuggingFace GPT2LMHeadModel and save it to `save_directory`.
+        """
+        from transformers import GPT2LMHeadModel, GPT2Config
+        # build HF config from this model's config
+        cfg_hf = GPT2Config(
+            vocab_size=self.config.vocab_size,
+            n_positions=self.config.block_size,
+            n_ctx=self.config.block_size,
+            n_embd=self.config.n_embd,
+            n_layer=self.config.n_layer,
+            n_head=self.config.n_head,
+        )
+        model_hf = GPT2LMHeadModel(cfg_hf)
+
+        # source (minGPT) and target (HF) state dicts
+        sd_src = self.state_dict()
+        sd_src_keys = [k for k in sd_src.keys() if not k.endswith('.attn.bias')]  # mirror from_pretrained
+        sd_tgt = model_hf.state_dict()
+        sd_tgt_keys = [k for k in sd_tgt.keys() if not k.endswith('.attn.masked_bias')]
+        sd_tgt_keys = [k for k in sd_tgt_keys if not k.endswith('.attn.bias')]
+
+        assert len(sd_src_keys) == len(sd_tgt_keys), f"mismatched keys: {len(sd_src_keys)} != {len(sd_tgt_keys)}"
+
+        transposed = ['attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight']
+
+        # copy parameters, transposing where necessary
+        for k_src, k_tgt in zip(sd_src_keys, sd_tgt_keys):
+            src_param = sd_src[k_src]
+            tgt_param = sd_tgt[k_tgt]
+            if any(k_tgt.endswith(suffix) for suffix in transposed):
+                # Conv1D->Linear transpose
+                assert src_param.shape[::-1] == tgt_param.shape, f"shape mismatch for transposed {k_src} -> {k_tgt}"
+                with torch.no_grad():
+                    sd_tgt[k_tgt].copy_(src_param.t())
+            else:
+                assert src_param.shape == tgt_param.shape, f"shape mismatch {k_src} -> {k_tgt}"
+                with torch.no_grad():
+                    sd_tgt[k_tgt].copy_(src_param)
+
+        # load the copied state dict into the HF model and save
+        model_hf.load_state_dict(sd_tgt)
+        model_hf.save_pretrained(save_directory)
+
     def configure_optimizers(self, weight_decay, learning_rate, device_type, master_process=False):
 
         # start with all of the candidate parameters (that require grad)
@@ -206,7 +252,7 @@ class GPT(nn.Module):
 def sample_from_model(model, enc, num_return_seq=4, max_len=32, prompt="Hello, I'm a language model,"):
     """
     Sample text from a GPT model.
-    
+
     Args:
         model: The GPT model to sample from
         enc: The tiktoken encoder to use for encoding/decoding
@@ -215,11 +261,11 @@ def sample_from_model(model, enc, num_return_seq=4, max_len=32, prompt="Hello, I
         prompt: The prompt to start generation from
     """
     model.eval()
-    
+
     # Get device from model
     device = next(model.parameters()).device
     device_type = "cuda" if device.type == "cuda" else "mps" if device.type == "mps" else "cpu"
-    
+
     tokens = enc.encode(prompt)
     tokens = torch.tensor(tokens, dtype=torch.long)
     tokens = tokens.unsqueeze(0).repeat(num_return_seq, 1).to(device)
@@ -244,4 +290,3 @@ def sample_from_model(model, enc, num_return_seq=4, max_len=32, prompt="Hello, I
     for i in range(num_return_seq):
         decoded = enc.decode(xgen[i, :max_len].tolist())
         print(f"sample {i}: {decoded}")
-

@@ -152,6 +152,91 @@ class GPT(nn.Module):
         elif isinstance(module, nn.Embedding):
             torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
+    def to_hf(self, save_directory):
+        """
+        Export this RoPE minGPT model to a HuggingFace GPT2LMHeadModel and save it to `save_directory`.
+
+        This implementation is robust to the fact that RoPE models don't use learned position
+        embeddings (so HF's `transformer.wpe` will be left as the HF default), and copies
+        any matching parameters by name. It also transposes Conv1D-like weights when needed.
+        """
+        import os
+        from transformers import GPT2LMHeadModel, GPT2Config
+
+        # build HF config from this model's config
+        cfg_hf = GPT2Config(
+            vocab_size=self.config.vocab_size,
+            n_positions=getattr(self.config, 'block_size', getattr(self.config, 'n_positions', 1024)),
+            n_ctx=getattr(self.config, 'block_size', getattr(self.config, 'n_ctx', 1024)),
+            n_embd=self.config.n_embd,
+            n_layer=self.config.n_layer,
+            n_head=self.config.n_head,
+        )
+        model_hf = GPT2LMHeadModel(cfg_hf)
+
+        # source (this model) and target (HF) state dicts
+        sd_src = self.state_dict()
+        # filter out any buffers that are not parameters (mirrors from_pretrained logic)
+        sd_src = {k: v for k, v in sd_src.items() if not k.endswith('.attn.bias')}
+
+        sd_tgt = model_hf.state_dict()
+        sd_tgt = {k: v for k, v in sd_tgt.items() if not k.endswith('.attn.masked_bias') and not k.endswith('.attn.bias')}
+
+        # helper: list of suffixes that require transposition (Conv1D -> Linear)
+        transposed_suffixes = ('attn.c_attn.weight', 'attn.c_proj.weight', 'mlp.c_fc.weight', 'mlp.c_proj.weight',
+                               'c_attn.weight', 'c_proj.weight', 'c_fc.weight', 'c_proj.weight')
+
+        # iterate over HF target keys and copy from source when a name match exists
+        copied = []
+        skipped = []
+        mismatches = []
+        for k_tgt in sd_tgt.keys():
+            if k_tgt in sd_src:
+                src_param = sd_src[k_tgt]
+                tgt_param = sd_tgt[k_tgt]
+                try:
+                    if any(k_tgt.endswith(suf) for suf in transposed_suffixes):
+                        # transpose Conv1D-like weight if shapes indicate
+                        if src_param.shape[::-1] == tgt_param.shape:
+                            with torch.no_grad():
+                                sd_tgt[k_tgt].copy_(src_param.t())
+                            copied.append(k_tgt)
+                        elif src_param.shape == tgt_param.shape:
+                            with torch.no_grad():
+                                sd_tgt[k_tgt].copy_(src_param)
+                            copied.append(k_tgt)
+                        else:
+                            mismatches.append((k_tgt, src_param.shape, tgt_param.shape))
+                    else:
+                        if src_param.shape == tgt_param.shape:
+                            with torch.no_grad():
+                                sd_tgt[k_tgt].copy_(src_param)
+                            copied.append(k_tgt)
+                        else:
+                            mismatches.append((k_tgt, src_param.shape, tgt_param.shape))
+                except Exception as e:
+                    mismatches.append((k_tgt, str(e)))
+            else:
+                # no corresponding parameter in the RoPE model; this commonly happens for
+                # HF position embeddings (`transformer.wpe`) which RoPE models don't use.
+                skipped.append(k_tgt)
+
+        # load the modified target state dict into the HF model
+        model_hf.load_state_dict(sd_tgt)
+
+        # ensure output directory exists and save
+        os.makedirs(save_directory, exist_ok=True)
+        model_hf.save_pretrained(save_directory)
+
+        # return a small report
+        report = {
+            'copied': len(copied),
+            'skipped': len(skipped),
+            'mismatches': mismatches[:20],
+        }
+        print(f"to_hf: copied={report['copied']} skipped={report['skipped']} mismatches={len(report['mismatches'])}")
+        return report
+
     def forward(self, idx, targets=None):
         # idx is of shape (B, T)
         B, T = idx.size()
