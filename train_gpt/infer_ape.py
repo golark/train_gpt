@@ -1,61 +1,110 @@
+import argparse
 import sys
-import torch
-import tiktoken
+import types
+from pathlib import Path
 
-sys.path.insert(0, '/Users/cjan/golark/train_gpt/train_gpt')
+import tiktoken
+import torch
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+
+import model_ape as _ma
 from model_ape import GPT, GPTConfig
 
-device = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-
-# checkpoint was saved with train_gpt.model.GPTConfig; shim that path to model_ape
-import types, model_ape as _ma
-_shim = types.ModuleType('train_gpt')
+# checkpoint may reference train_gpt.model.GPTConfig
+_shim = types.ModuleType("train_gpt")
 _shim.model = _ma
-sys.modules.setdefault('train_gpt', _shim)
-sys.modules.setdefault('train_gpt.model', _ma)
+sys.modules.setdefault("train_gpt", _shim)
+sys.modules.setdefault("train_gpt.model", _ma)
 
-checkpoint = torch.load('/Users/cjan/golark/train_gpt/models/inc_max_lr_model.pt', map_location=device, weights_only=False)
+device = (
+    "cuda"
+    if torch.cuda.is_available()
+    else "mps"
+    if torch.backends.mps.is_available()
+    else "cpu"
+)
 
-if isinstance(checkpoint, dict) and 'model' in checkpoint:
-    state_dict = checkpoint['model']
-    config = checkpoint.get('config', GPTConfig())
-else:
-    state_dict = checkpoint
-    config = GPTConfig()
 
-state_dict = {k.replace('_orig_mod.', '').replace('module.', ''): v for k, v in state_dict.items()}
+def load_model(checkpoint_path: Path) -> GPT:
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
 
-model = GPT(config)
-model.load_state_dict(state_dict)
-model.to(device)
-model.eval()
+    if isinstance(checkpoint, dict) and "model" in checkpoint:
+        state_dict = checkpoint["model"]
+        config = checkpoint.get("config", GPTConfig())
+    else:
+        state_dict = checkpoint
+        config = GPTConfig()
 
-print(f"Loaded APE model on {device} | layers={config.n_layer} heads={config.n_head} embd={config.n_embd}")
+    state_dict = {
+        k.replace("_orig_mod.", "").replace("module.", ""): v
+        for k, v in state_dict.items()
+    }
 
-enc = tiktoken.get_encoding('gpt2')
+    model = GPT(config)
+    model.load_state_dict(state_dict)
+    model.to(device)
+    model.eval()
+    return model
 
-prompts = [
-    "Hello, I'm a language model,",
-    "The capital of France is",
-    "Once upon a time,",
-]
 
-num_return_sequences = 1
-max_new_tokens = 50
-
-for prompt in prompts:
+def generate(model: GPT, enc, prompt: str, max_new_tokens: int) -> str:
     tokens = enc.encode(prompt)
-    x = torch.tensor(tokens, dtype=torch.long, device=device).unsqueeze(0).repeat(num_return_sequences, 1)
+    x = torch.tensor(tokens, dtype=torch.long, device=device).unsqueeze(0)
 
     with torch.no_grad():
         for _ in range(max_new_tokens):
             logits, _ = model(x)
-            next_logits = logits[:, -1, :]
-            probs = torch.softmax(next_logits, dim=-1)
-            next_token = torch.multinomial(probs, num_samples=1)
+            next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
             x = torch.cat([x, next_token], dim=1)
 
-    for i in range(num_return_sequences):
-        generated = enc.decode(x[i].tolist())
-        print(f"\nPrompt: {prompt!r}")
-        print(f"Output: {generated}")
+    return enc.decode(x[0].tolist())
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=ROOT.parent / "models" / "inc_max_lr_model.pt",
+    )
+    parser.add_argument(
+        "--prompt",
+        default="Hello, I'm a language model,",
+    )
+    parser.add_argument("--max-new-tokens", type=int, default=1)
+    parser.add_argument(
+        "--save-safetensors",
+        type=Path,
+        default=None,
+        help="optional path to export weights as safetensors",
+    )
+    args = parser.parse_args()
+
+    model = load_model(args.checkpoint)
+    config = model.config
+    print(
+        f"Loaded APE model on {device} | "
+        f"layers={config.n_layer} heads={config.n_head} embd={config.n_embd} "
+        f"vocab={config.vocab_size}"
+    )
+
+    enc = tiktoken.get_encoding("gpt2")
+    output = generate(model, enc, args.prompt, args.max_new_tokens)
+
+    print(f"\nPrompt: {args.prompt!r}")
+    print(f"Output: {output}")
+
+    if args.save_safetensors is not None:
+        from safetensors.torch import save_file
+
+        save_file(
+            {k: v.contiguous().cpu() for k, v in model.state_dict().items()},
+            args.save_safetensors,
+        )
+        print(f"Saved safetensors to {args.save_safetensors}")
+
+
+if __name__ == "__main__":
+    main()
